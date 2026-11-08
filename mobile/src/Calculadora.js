@@ -1,4 +1,4 @@
-// Historia KAN-4: Interfaz de la calculadora (también KAN-1)
+// Historia KAN-4: Interfaz de la calculadora (también KAN-1 y KAN-12)
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -21,9 +21,26 @@ const numeroActual = (texto) => texto.split(/[+\-*/^]/).pop();
 export default function Calculadora({ calcular }) {
   const [entrada, setEntrada] = useState(''); // lo que el usuario va tecleando
   const [resultado, setResultado] = useState(''); // "operación = resultado" o un mensaje de error
+  const [hayError, setHayError] = useState(false); // KAN-12: el mensaje de error se pinta en rojo
+
+  // KAN-12: al pulsar "=" se calcula, se muestra el resultado y se limpia la captura.
+  async function igual() {
+    if (!calcular || !entrada) return; // sin nada capturado, "=" no hace nada
+    const operacion = entrada;
+    setEntrada('');
+    try {
+      const valor = await calcular(operacion);
+      setResultado(`${operacion} = ${valor}`); // la operación junto con su resultado
+      setHayError(false);
+    } catch (error) {
+      // Cualquier fallo (operación inválida, sin conexión...) se muestra sin cerrar la app.
+      setResultado(error.message);
+      setHayError(true);
+    }
+  }
 
   function pulsar(tecla) {
-    if (tecla === '=') return; // el cálculo al pulsar "=" llega en KAN-12
+    if (tecla === '=') return igual();
     // KAN-1: solo se permite un punto decimal por número; si ya hay uno, se ignora el nuevo.
     setEntrada((actual) =>
       tecla === '.' && numeroActual(actual).includes('.') ? actual : actual + tecla
@@ -39,7 +56,7 @@ export default function Calculadora({ calcular }) {
         </Text>
         <Text
           testID="resultado"
-          style={estilos.resultado}
+          style={[estilos.resultado, hayError && estilos.error]}
           numberOfLines={1}
           adjustsFontSizeToFit
         >
@@ -77,6 +94,7 @@ const estilos = StyleSheet.create({
   visor: { flex: 2, justifyContent: 'flex-end', padding: 12 },
   entrada: { color: '#fff', fontSize: 48, textAlign: 'right' },
   resultado: { color: '#9aa', fontSize: 28, textAlign: 'right', minHeight: 36 },
+  error: { color: '#ff6b6b' },
   fila: { flex: 1, flexDirection: 'row' },
   boton: {
     flex: 1,
