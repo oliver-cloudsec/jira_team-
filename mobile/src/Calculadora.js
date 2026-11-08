@@ -1,4 +1,4 @@
-// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13, KAN-14, KAN-2 y KAN-3)
+// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13, KAN-14, KAN-2, KAN-3 y KAN-7)
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -42,7 +42,7 @@ export default function Calculadora({ calcular }) {
     try {
       const valor = await calcular(operacion);
       if (miTurno !== turno.current) return; // KAN-2: se pulsó AC mientras esperábamos
-      setResultado(`${mostrar(operacion)} = ${valor}`); // KAN-13: con los símbolos × ÷ −
+      setResultado(mostrar(`${operacion} = ${valor}`)); // KAN-7: también muestra − en un resultado negativo
       setHayError(false);
       setUltimo(valor); // KAN-3: ya viene redondeado a 5 decimales, tal como se ve en pantalla
     } catch (error) {
