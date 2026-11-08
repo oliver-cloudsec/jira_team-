@@ -1,27 +1,33 @@
-// Historia KAN-4: Interfaz de la calculadora
+// Historia KAN-4: Interfaz de la calculadora (también KAN-1)
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-// Los botones van en una cuadrícula: dígitos 0-9, operadores y "=".
+// Los botones van en una cuadrícula: dígitos 0-9, punto decimal, operadores y "=".
 const FILAS = [
   ['7', '8', '9', '/'],
   ['4', '5', '6', '*'],
   ['1', '2', '3', '-'],
-  ['0', '^', '+'],
+  ['0', '.', '^', '+'],
   ['='],
 ];
 
 const OPERADORES = ['+', '-', '*', '/', '^'];
 
-// 'calcular' será la función que resuelva la operación. La recibimos por props para no mezclar
-// la pantalla con la API (se conecta en KAN-1 y se usa al pulsar "=" en KAN-12).
+// KAN-1: el número que se está escribiendo es lo que queda después del último operador.
+const numeroActual = (texto) => texto.split(/[+\-*/^]/).pop();
+
+// 'calcular' es la función que resuelve la operación (App.js la toma de api.js, que le pregunta
+// al backend). La recibimos por props para no mezclar la pantalla con la API.
 export default function Calculadora({ calcular }) {
   const [entrada, setEntrada] = useState(''); // lo que el usuario va tecleando
   const [resultado, setResultado] = useState(''); // "operación = resultado" o un mensaje de error
 
   function pulsar(tecla) {
     if (tecla === '=') return; // el cálculo al pulsar "=" llega en KAN-12
-    setEntrada((actual) => actual + tecla);
+    // KAN-1: solo se permite un punto decimal por número; si ya hay uno, se ignora el nuevo.
+    setEntrada((actual) =>
+      tecla === '.' && numeroActual(actual).includes('.') ? actual : actual + tecla
+    );
   }
 
   return (
