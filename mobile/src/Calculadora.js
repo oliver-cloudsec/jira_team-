@@ -1,14 +1,14 @@
-// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13 y KAN-14)
-import { useState } from 'react';
+// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13, KAN-14 y KAN-2)
+import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-// Los botones van en una cuadrícula: dígitos 0-9, punto decimal, operadores, borrar y "=".
+// Los botones van en una cuadrícula: dígitos 0-9, punto decimal, operadores, AC, borrar y "=".
 const FILAS = [
   ['7', '8', '9', '/'],
   ['4', '5', '6', '*'],
   ['1', '2', '3', '-'],
   ['0', '.', '^', '+'],
-  ['borrar', '='],
+  ['AC', 'borrar', '='],
 ];
 
 const OPERADORES = ['+', '-', '*', '/', '^'];
@@ -29,17 +29,22 @@ export default function Calculadora({ calcular }) {
   const [entrada, setEntrada] = useState(''); // lo que el usuario va tecleando
   const [resultado, setResultado] = useState(''); // "operación = resultado" o un mensaje de error
   const [hayError, setHayError] = useState(false); // KAN-12: el mensaje de error se pinta en rojo
+  // KAN-2: cuenta los cálculos pedidos; si se pulsa AC mientras llega una respuesta, se descarta.
+  const turno = useRef(0);
 
   // KAN-12: al pulsar "=" se calcula, se muestra el resultado y se limpia la captura.
   async function igual() {
     if (!calcular || !entrada) return; // sin nada capturado, "=" no hace nada
     const operacion = entrada;
+    const miTurno = ++turno.current;
     setEntrada('');
     try {
       const valor = await calcular(operacion);
+      if (miTurno !== turno.current) return; // KAN-2: se pulsó AC mientras esperábamos
       setResultado(`${mostrar(operacion)} = ${valor}`); // KAN-13: con los símbolos × ÷ −
       setHayError(false);
     } catch (error) {
+      if (miTurno !== turno.current) return;
       // Cualquier fallo (operación inválida, sin conexión...) se muestra sin cerrar la app.
       setResultado(error.message);
       setHayError(true);
@@ -48,6 +53,14 @@ export default function Calculadora({ calcular }) {
 
   function pulsar(tecla) {
     if (tecla === '=') return igual();
+    // KAN-2: AC limpia todo de una vez. Si ya estaba vacío, no cambia nada.
+    if (tecla === 'AC') {
+      turno.current++;
+      setEntrada('');
+      setResultado('');
+      setHayError(false);
+      return;
+    }
     // KAN-14: borra solo el último carácter; si la captura está vacía, no pasa nada.
     if (tecla === 'borrar') return setEntrada((actual) => actual.slice(0, -1));
     // KAN-1: solo se permite un punto decimal por número; si ya hay uno, se ignora el nuevo.
@@ -85,6 +98,7 @@ export default function Calculadora({ calcular }) {
               style={({ pressed }) => [
                 estilos.boton,
                 OPERADORES.includes(tecla) && estilos.operador,
+                tecla === 'AC' && estilos.ac,
                 tecla === 'borrar' && estilos.borrar,
                 tecla === '=' && estilos.igual,
                 pressed && estilos.presionado,
@@ -116,6 +130,7 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
   },
   operador: { backgroundColor: '#f09a37' },
+  ac: { backgroundColor: '#c0392b' },
   borrar: { backgroundColor: '#5a5a5a' },
   igual: { backgroundColor: '#2e9e5b', flex: 2 }, // el "=" ocupa más lugar que los otros botones de su fila
   presionado: { opacity: 0.6 },
