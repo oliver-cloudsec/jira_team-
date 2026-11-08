@@ -1,4 +1,4 @@
-// Historia KAN-4: Interfaz de la calculadora (también KAN-1 y KAN-12)
+// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12 y KAN-13)
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -12,6 +12,10 @@ const FILAS = [
 ];
 
 const OPERADORES = ['+', '-', '*', '/', '^'];
+
+// KAN-13: en pantalla se ven × ÷ −, pero al backend se le manda * / - (lo que entiende el motor).
+const SIMBOLO = { '*': '×', '/': '÷', '-': '−' };
+const mostrar = (texto) => texto.replace(/[*/-]/g, (c) => SIMBOLO[c]);
 
 // KAN-1: el número que se está escribiendo es lo que queda después del último operador.
 const numeroActual = (texto) => texto.split(/[+\-*/^]/).pop();
@@ -30,7 +34,7 @@ export default function Calculadora({ calcular }) {
     setEntrada('');
     try {
       const valor = await calcular(operacion);
-      setResultado(`${operacion} = ${valor}`); // la operación junto con su resultado
+      setResultado(`${mostrar(operacion)} = ${valor}`); // KAN-13: con los símbolos × ÷ −
       setHayError(false);
     } catch (error) {
       // Cualquier fallo (operación inválida, sin conexión...) se muestra sin cerrar la app.
@@ -52,7 +56,7 @@ export default function Calculadora({ calcular }) {
       {/* Zona de arriba: primero lo que se escribe, abajo el resultado */}
       <View style={estilos.visor}>
         <Text testID="entrada" style={estilos.entrada} numberOfLines={1} adjustsFontSizeToFit>
-          {entrada}
+          {mostrar(entrada)}
         </Text>
         <Text
           testID="resultado"
@@ -71,7 +75,7 @@ export default function Calculadora({ calcular }) {
               key={tecla}
               testID={`tecla-${tecla}`}
               accessibilityRole="button"
-              accessibilityLabel={tecla}
+              accessibilityLabel={mostrar(tecla)}
               onPress={() => pulsar(tecla)}
               style={({ pressed }) => [
                 estilos.boton,
@@ -80,7 +84,7 @@ export default function Calculadora({ calcular }) {
                 pressed && estilos.presionado,
               ]}
             >
-              <Text style={estilos.textoBoton}>{tecla}</Text>
+              <Text style={estilos.textoBoton}>{mostrar(tecla)}</Text>
             </Pressable>
           ))}
         </View>
@@ -98,6 +102,7 @@ const estilos = StyleSheet.create({
   fila: { flex: 1, flexDirection: 'row' },
   boton: {
     flex: 1,
+    minHeight: 56, // KAN-13: mínimo cómodo para el dedo (las guías piden 44 pt o más)
     margin: 6,
     borderRadius: 16,
     backgroundColor: '#333',
