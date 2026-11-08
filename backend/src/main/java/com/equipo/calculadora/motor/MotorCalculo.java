@@ -1,4 +1,4 @@
-// Historia KAN-1: Realizar operaciones básicas
+// Historia KAN-1: Realizar operaciones básicas (también KAN-3)
 package com.equipo.calculadora.motor;
 
 import java.math.BigDecimal;
@@ -14,9 +14,10 @@ public class MotorCalculo {
 
     // Un número: entero ("8"), decimal ("1.5") o con punto al inicio/final (".5", "1.")
     private static final String NUMERO = "(?:\\d+(?:\\.\\d*)?|\\.\\d+)";
-    // número, un operador, número
+    // número, un operador, número. KAN-3: el primer número puede ser negativo, para poder
+    // encadenar un resultado negativo (por ejemplo "-6+3" después de 2-8).
     private static final Pattern OPERACION =
-            Pattern.compile("^(" + NUMERO + ")([+\\-*/^])(" + NUMERO + ")$");
+            Pattern.compile("^(-?" + NUMERO + ")([+\\-*/^])(" + NUMERO + ")$");
 
     public static String calcular(String expresion) {
         Matcher m = OPERACION.matcher(expresion == null ? "" : expresion.trim());

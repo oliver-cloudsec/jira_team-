@@ -1,4 +1,4 @@
-// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13, KAN-14 y KAN-2)
+// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13, KAN-14, KAN-2 y KAN-3)
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -29,6 +29,7 @@ export default function Calculadora({ calcular }) {
   const [entrada, setEntrada] = useState(''); // lo que el usuario va tecleando
   const [resultado, setResultado] = useState(''); // "operación = resultado" o un mensaje de error
   const [hayError, setHayError] = useState(false); // KAN-12: el mensaje de error se pinta en rojo
+  const [ultimo, setUltimo] = useState(null); // KAN-3: último resultado, listo para encadenar
   // KAN-2: cuenta los cálculos pedidos; si se pulsa AC mientras llega una respuesta, se descarta.
   const turno = useRef(0);
 
@@ -43,11 +44,13 @@ export default function Calculadora({ calcular }) {
       if (miTurno !== turno.current) return; // KAN-2: se pulsó AC mientras esperábamos
       setResultado(`${mostrar(operacion)} = ${valor}`); // KAN-13: con los símbolos × ÷ −
       setHayError(false);
+      setUltimo(valor); // KAN-3: ya viene redondeado a 5 decimales, tal como se ve en pantalla
     } catch (error) {
       if (miTurno !== turno.current) return;
       // Cualquier fallo (operación inválida, sin conexión...) se muestra sin cerrar la app.
       setResultado(error.message);
       setHayError(true);
+      setUltimo(null); // KAN-3: un error no deja nada para encadenar
     }
   }
 
@@ -59,10 +62,18 @@ export default function Calculadora({ calcular }) {
       setEntrada('');
       setResultado('');
       setHayError(false);
+      setUltimo(null);
       return;
     }
     // KAN-14: borra solo el último carácter; si la captura está vacía, no pasa nada.
     if (tecla === 'borrar') return setEntrada((actual) => actual.slice(0, -1));
+    // KAN-3: justo después de un resultado, un operador sigue con ese valor (12 y luego +3 = 12+3);
+    // un dígito o el punto empieza una operación nueva desde cero.
+    if (ultimo !== null) {
+      setUltimo(null);
+      setEntrada(OPERADORES.includes(tecla) ? ultimo + tecla : tecla);
+      return;
+    }
     // KAN-1: solo se permite un punto decimal por número; si ya hay uno, se ignora el nuevo.
     setEntrada((actual) =>
       tecla === '.' && numeroActual(actual).includes('.') ? actual : actual + tecla
