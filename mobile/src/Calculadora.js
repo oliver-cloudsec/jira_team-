@@ -1,14 +1,14 @@
-// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12 y KAN-13)
+// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13 y KAN-14)
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-// Los botones van en una cuadrícula: dígitos 0-9, punto decimal, operadores y "=".
+// Los botones van en una cuadrícula: dígitos 0-9, punto decimal, operadores, borrar y "=".
 const FILAS = [
   ['7', '8', '9', '/'],
   ['4', '5', '6', '*'],
   ['1', '2', '3', '-'],
   ['0', '.', '^', '+'],
-  ['='],
+  ['borrar', '='],
 ];
 
 const OPERADORES = ['+', '-', '*', '/', '^'];
@@ -16,6 +16,9 @@ const OPERADORES = ['+', '-', '*', '/', '^'];
 // KAN-13: en pantalla se ven × ÷ −, pero al backend se le manda * / - (lo que entiende el motor).
 const SIMBOLO = { '*': '×', '/': '÷', '-': '−' };
 const mostrar = (texto) => texto.replace(/[*/-]/g, (c) => SIMBOLO[c]);
+
+// KAN-14: el botón de borrar se dibuja con el símbolo ⌫.
+const etiqueta = (tecla) => (tecla === 'borrar' ? '⌫' : mostrar(tecla));
 
 // KAN-1: el número que se está escribiendo es lo que queda después del último operador.
 const numeroActual = (texto) => texto.split(/[+\-*/^]/).pop();
@@ -45,6 +48,8 @@ export default function Calculadora({ calcular }) {
 
   function pulsar(tecla) {
     if (tecla === '=') return igual();
+    // KAN-14: borra solo el último carácter; si la captura está vacía, no pasa nada.
+    if (tecla === 'borrar') return setEntrada((actual) => actual.slice(0, -1));
     // KAN-1: solo se permite un punto decimal por número; si ya hay uno, se ignora el nuevo.
     setEntrada((actual) =>
       tecla === '.' && numeroActual(actual).includes('.') ? actual : actual + tecla
@@ -75,16 +80,17 @@ export default function Calculadora({ calcular }) {
               key={tecla}
               testID={`tecla-${tecla}`}
               accessibilityRole="button"
-              accessibilityLabel={mostrar(tecla)}
+              accessibilityLabel={tecla === 'borrar' ? 'Borrar último carácter' : mostrar(tecla)}
               onPress={() => pulsar(tecla)}
               style={({ pressed }) => [
                 estilos.boton,
                 OPERADORES.includes(tecla) && estilos.operador,
+                tecla === 'borrar' && estilos.borrar,
                 tecla === '=' && estilos.igual,
                 pressed && estilos.presionado,
               ]}
             >
-              <Text style={estilos.textoBoton}>{mostrar(tecla)}</Text>
+              <Text style={estilos.textoBoton}>{etiqueta(tecla)}</Text>
             </Pressable>
           ))}
         </View>
@@ -110,7 +116,8 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
   },
   operador: { backgroundColor: '#f09a37' },
-  igual: { backgroundColor: '#2e9e5b' },
+  borrar: { backgroundColor: '#5a5a5a' },
+  igual: { backgroundColor: '#2e9e5b', flex: 2 }, // el "=" ocupa más lugar que los otros botones de su fila
   presionado: { opacity: 0.6 },
   textoBoton: { color: '#fff', fontSize: 32 },
 });
