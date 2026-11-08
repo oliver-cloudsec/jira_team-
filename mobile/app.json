@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "Calculadora",
+    "slug": "calculadora",
+    "version": "0.0.1",
+    "ios": { "supportsTablet": true },
+    "android": {}
+  }
+}

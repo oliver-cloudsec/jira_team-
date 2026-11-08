@@ -1,0 +1,6 @@
+# Se generan solos: no se suben al repositorio
+node_modules/
+.expo/
+target/
+entregas/
+.DS_Store
