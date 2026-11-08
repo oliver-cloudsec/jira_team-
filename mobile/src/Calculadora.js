@@ -1,4 +1,4 @@
-// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13, KAN-14, KAN-2, KAN-3 y KAN-7)
+// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13, KAN-14, KAN-2, KAN-3, KAN-7 y KAN-6)
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -22,6 +22,22 @@ const etiqueta = (tecla) => (tecla === 'borrar' ? '⌫' : mostrar(tecla));
 
 // KAN-1: el número que se está escribiendo es lo que queda después del último operador.
 const numeroActual = (texto) => texto.split(/[+\-*/^]/).pop();
+
+// KAN-6 (junto con KAN-7): agrega un operador a la captura.
+// - sin número todavía solo se acepta "-" (signo negativo); los demás operadores no hacen nada
+// - un operador nuevo reemplaza al anterior ("8*" y luego "+" queda "8+")
+// - la excepción es "-": después de un operador es el signo del número que sigue ("5*-3"),
+//   pero no se aceptan dos signos seguidos
+const esOperador = (c) => OPERADORES.includes(c);
+
+function agregarOperador(texto, op) {
+  const ultimo = texto.slice(-1);
+  if (!esOperador(ultimo)) return texto === '' && op !== '-' ? '' : texto + op;
+  const terminaEnSigno = ultimo === '-' && (texto.length === 1 || esOperador(texto.slice(-2, -1)));
+  if (op === '-') return terminaEnSigno ? texto : texto + op;
+  const base = texto.replace(/[+\-*/^]+$/, ''); // quita el operador (y el signo) del final
+  return base === '' ? '' : base + op;
+}
 
 // 'calcular' es la función que resuelve la operación (App.js la toma de api.js, que le pregunta
 // al backend). La recibimos por props para no mezclar la pantalla con la API.
@@ -72,6 +88,11 @@ export default function Calculadora({ calcular }) {
     if (ultimo !== null) {
       setUltimo(null);
       setEntrada(OPERADORES.includes(tecla) ? ultimo + tecla : tecla);
+      return;
+    }
+    // KAN-6: reglas para los operadores (ver agregarOperador)
+    if (esOperador(tecla)) {
+      setEntrada((actual) => agregarOperador(actual, tecla));
       return;
     }
     // KAN-1: solo se permite un punto decimal por número; si ya hay uno, se ignora el nuevo.

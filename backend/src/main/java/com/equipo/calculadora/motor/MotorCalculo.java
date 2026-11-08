@@ -1,4 +1,4 @@
-// Historia KAN-1: Realizar operaciones básicas (también KAN-3 y KAN-7)
+// Historia KAN-1: Realizar operaciones básicas (también KAN-3, KAN-6 y KAN-7)
 package com.equipo.calculadora.motor;
 
 import java.math.BigDecimal;
@@ -30,6 +30,10 @@ public class MotorCalculo {
 
     public static String calcular(String expresion) {
         String texto = expresion == null ? "" : expresion.trim();
+        // KAN-6: termina en operador (por ejemplo "8*"): falta el número que sigue.
+        if (!texto.isEmpty() && "+-*/^".indexOf(texto.charAt(texto.length() - 1)) >= 0) {
+            throw new IllegalArgumentException("Operación incompleta");
+        }
         if (!VALIDA.matcher(texto).matches()) {
             throw new IllegalArgumentException("Operación inválida");
         }
@@ -77,7 +81,11 @@ public class MotorCalculo {
 
     private static double aplicar(char operador, double a, double b) {
         if (operador == '/' && b == 0) {
-            throw new IllegalArgumentException("No se puede dividir entre cero");
+            throw new IllegalArgumentException("Error: división entre cero");
+        }
+        // KAN-6: 0 elevado a un negativo equivale a dividir entre cero, así que no está definido.
+        if (operador == '^' && a == 0 && b < 0) {
+            throw new IllegalArgumentException("Error: resultado indefinido");
         }
         double r = switch (operador) {
             case '+' -> a + b;
@@ -86,9 +94,9 @@ public class MotorCalculo {
             case '/' -> a / b;
             default -> Math.pow(a, b); // '^'
         };
-        // Ejemplos: 9^9999999 se vuelve infinito; -8^0.5 no existe entre los números reales.
+        // Ejemplos: 9^9999999 se vuelve infinito; -8^0.5 no existe entre los reales (queda indefinido).
         if (Double.isInfinite(r)) throw new IllegalArgumentException("El resultado es demasiado grande");
-        if (Double.isNaN(r)) throw new IllegalArgumentException("El resultado no es un número real");
+        if (Double.isNaN(r)) throw new IllegalArgumentException("Error: resultado indefinido");
         return r;
     }
 }
