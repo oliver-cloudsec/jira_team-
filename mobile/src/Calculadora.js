@@ -1,6 +1,7 @@
-// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13, KAN-14, KAN-2, KAN-3, KAN-7 y KAN-6)
+// Historia KAN-4: Interfaz de la calculadora (también KAN-1, KAN-12, KAN-13, KAN-14, KAN-2, KAN-3, KAN-7, KAN-6 y KAN-11)
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { conIndicador } from './conIndicador';
 
 // Los botones van en una cuadrícula: dígitos 0-9, punto decimal, operadores, AC, borrar y "=".
 const FILAS = [
@@ -46,6 +47,7 @@ export default function Calculadora({ calcular }) {
   const [resultado, setResultado] = useState(''); // "operación = resultado" o un mensaje de error
   const [hayError, setHayError] = useState(false); // KAN-12: el mensaje de error se pinta en rojo
   const [ultimo, setUltimo] = useState(null); // KAN-3: último resultado, listo para encadenar
+  const [cargando, setCargando] = useState(false); // KAN-11: true si el cálculo tarda más de 200 ms
   // KAN-2: cuenta los cálculos pedidos; si se pulsa AC mientras llega una respuesta, se descarta.
   const turno = useRef(0);
 
@@ -56,7 +58,12 @@ export default function Calculadora({ calcular }) {
     const miTurno = ++turno.current;
     setEntrada('');
     try {
-      const valor = await calcular(operacion);
+      // KAN-11: si el servidor tarda más de 200 ms, conIndicador muestra el indicador de progreso.
+      const valor = await conIndicador(
+        () => calcular(operacion),
+        () => setCargando(true),
+        () => miTurno === turno.current && setCargando(false) // si hubo AC o un cálculo nuevo, no lo toca
+      );
       if (miTurno !== turno.current) return; // KAN-2: se pulsó AC mientras esperábamos
       setResultado(mostrar(`${operacion} = ${valor}`)); // KAN-7: también muestra − en un resultado negativo
       setHayError(false);
@@ -75,6 +82,7 @@ export default function Calculadora({ calcular }) {
     // KAN-2: AC limpia todo de una vez. Si ya estaba vacío, no cambia nada.
     if (tecla === 'AC') {
       turno.current++;
+      setCargando(false);
       setEntrada('');
       setResultado('');
       setHayError(false);
@@ -108,6 +116,7 @@ export default function Calculadora({ calcular }) {
         <Text testID="entrada" style={estilos.entrada} numberOfLines={1} adjustsFontSizeToFit>
           {mostrar(entrada)}
         </Text>
+        {cargando && <ActivityIndicator testID="cargando" color="#fff" accessibilityLabel="Calculando" />}
         <Text
           testID="resultado"
           style={[estilos.resultado, hayError && estilos.error]}
