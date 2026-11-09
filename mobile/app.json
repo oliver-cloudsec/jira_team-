@@ -4,6 +4,15 @@
     "slug": "calculadora",
     "version": "0.0.1",
     "ios": { "supportsTablet": true },
-    "android": {}
+    "android": {},
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": { "minSdkVersion": 29 },
+          "ios": { "deploymentTarget": "16.4" }
+        }
+      ]
+    ]
   }
 }
